@@ -1,6 +1,12 @@
 -create react app
 -configured tailwind css
-
+-sign in
+-sign up
+-routing
+-form validation
+-useRef
+-firebase setup
+-sign up authentication in firebase
 
 
 
