@@ -18,4 +18,7 @@ export const IMG_CDN_URL = "https://image.tmdb.org/t/p/w500"
 
 export const BG_URL = "https://assets.nflxext.com/ffe/siteui/vlv3/cacfadb7-c017-4318-85e4-7f46da1cae88/e43aa8b1-ea06-46a5-abe3-df13243e718d/IN-en-20240603-popsignuptwoweeks-perspective_alpha_website_medium.jpg"
 
-export const SUPPORTED_LANGUAGES=[{identifier:"en",name:"English"},{identifier:"hindi",name:"Hindi"},{identifier:"arabic",name:"Arabic"}]
+export const SUPPORTED_LANGUAGES = [{ identifier: "en", name: "English" }, { identifier: "hindi", name: "Hindi" }, { identifier: "arabic", name: "Arabic" }]
+
+//export const OPENAI_KEY = "sk-BvoM2r9kMKp7dLp0VX5spV3YIM7Yw1Dky8QKsCpa8UT3BlbkFJxIy6fyVG1lm9DpFRgnWUrh2G8o6CpoGjhdLS8ZGDgA"
+export const OPENAI_KEY = process.env.REACT_APP_OPAINAI_KEY;
