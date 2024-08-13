@@ -21,4 +21,8 @@ export const BG_URL = "https://assets.nflxext.com/ffe/siteui/vlv3/cacfadb7-c017-
 export const SUPPORTED_LANGUAGES = [{ identifier: "en", name: "English" }, { identifier: "hindi", name: "Hindi" }, { identifier: "arabic", name: "Arabic" }]
 
 //export const OPENAI_KEY = "sk-BvoM2r9kMKp7dLp0VX5spV3YIM7Yw1Dky8QKsCpa8UT3BlbkFJxIy6fyVG1lm9DpFRgnWUrh2G8o6CpoGjhdLS8ZGDgA"
-export const OPENAI_KEY = process.env.REACT_APP_OPAINAI_KEY;
+//export const OPENAI_KEY = process.env.REACT_APP_OPAINAI_KEY;
+
+export const YOUTUBE_TRAILER_URL = "https://www.youtube.com/watch?v=";
+export const YOUTUBE_QUERY_URL =
+  "https://www.youtube.com/results?search_query=";

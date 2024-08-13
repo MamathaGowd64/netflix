@@ -7,127 +7,206 @@ import { createUserWithEmailAndPassword,signInWithEmailAndPassword,updateProfile
 import { auth } from '../utils/firebase'
 import { useNavigate } from "react-router-dom";
 import { addUser } from '../utils/userSlice';
-import { BG_URL, USER_AVATAR } from "../constants/constants.js"
+import { BG_URL, USER_AVATAR,LOADER_BTN_CONTENT } from "../constants/constants.js"
+import { useMemo } from 'react';
+import Footer from './Footer.js';
 
 const Login = () => {
+  const email = useRef();
+  const password = useRef();
+  const signInUpBtn = useRef();
+  const [name, setName] = useState("");
+  const [passwordType, setPasswordType] = useState("password");
 
-  const [isSignInForm, setIsSignInForm] = useState(true);
+  const [isSignIn, setIsSignIn] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
-  const email = useRef(null);
-  const password = useRef(null);
 
-    const toggleSignInForm=()=>{
-        setIsSignInForm(!isSignInForm);
+  // memoizing header
+  const memoizedHeader = useMemo(() => {
+    return <Header />;
+  }, []);
+
+  // toggler to switch between sign in and sign up functionality
+  const signInUpToggler = () => {
+    setIsSignIn(!isSignIn);
+    // clearning form fields on toggle
+    email.current.value = "";
+    password.current.value = "";
+    setName("");
+    setErrorMessage(null);
+  };
+
+  // adding user to redux store
+  const addUserToReduxStore = (user) => {
+    const {displayName, email, uid, photoURL } = user;
+    const userInfo = { displayName, email, uid, photoURL };
+    dispatch(addUser(userInfo));
+  };
+
+  // updating user info after login in
+  const updateUserWithName = (user) => {
+    updateProfile(auth.currentUser, {
+      displayName: name,
+      //dummyphotoURL as of now
+      photoURL: USER_AVATAR,
+    })
+      .then(() => {
+        // Profile updated!
+        // once profile updated with name then add it to the redux store
+        addUserToReduxStore(user);
+      })
+      .catch((error) => {
+        console.log("Error in updating the profile" + error);
+      });
+  };
+
+  // handing submission of the form based on either sign in or sign up via firebase
+  const submitHandler = (e) => {
+    e.preventDefault();
+    const validationMessage = checkValidateData(
+      name,
+      email.current.value,
+      password.current.value,
+      isSignIn
+    );
+    setErrorMessage(validationMessage);
+
+    // if not validated return from here
+    if (validationMessage !== true) {
+      return;
     }
 
-  const handleOnClick = () => {
-  const result = checkValidateData(email.current.value, password.current.value);
-    setErrorMessage(result);
+    // adding loader for signin up/in stage
+    signInUpBtn.current.innerHTML = LOADER_BTN_CONTENT;
 
-    if (result) return;
-      
-    if (!isSignInForm) {
-      //sign up logic
-
-      createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
-      .then((userCredential) => {
-    // Signed up 
-        const user = userCredential.user;      
-          updateProfile(user, {
-            displayName: "Mamatha",
-            photoURL:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKYAAACUCAMAAAAu5KLjAAAAMFBMVEXk5ueutLenrrHn6eqrsbS0ubzb3t+2vL7X2tzh4+S7wMPS1de/xMbCx8nIzM6xt7lOagnvAAADuUlEQVR4nO2b23asIAxAgShXhf//24IzPVNbnQGiQddhP/WteyWTcIuMdTqdTqfT6XQ6nU6n06kCWgt8AACYlFprY9Kf1wSYm1XgCyEor68X1hhFrwYx8BeDENbJKwUVQNvxp+K36RAmeR1PqYYNyYcpt+YSomBmseP4DKm/gCi4rXSvRcf2mZ8/SS6ivq2kmXIso+fcVFPlWUbPqV3ezcef5Q9P28wyO5YPzzbxhCLLVEctPMG/bZdbOHpP0KWSEUmuyVS55aCowwmZDfOXJ/HPE2SNJecjcdqrgkm+aroqyYSh1KwMJvGv0xS3zBd0lpC1e9sJJ12Ph/pYEm5Bqhagf5D1JEzOU9aJNI1Fac5EP04ZEJacByJNjQkm54Kow3ukpqbRRFUQ2UIEqAqK0NQQjDhLTnR2wxV6bPA0msicd83/UZNmGYJ7lNBNGhK2vVNtke6xWN5l6+GQmjSWTOJqiKhtMnaPQ8ZNjmwgEZaEl3L3uE64y+UMM/WaVMffhepw0l5rV98iDaTXsHUvBPRPwbVPBKTBrC12yjJ/UrGwt3hdvcljIJTv5xo8rZZXe5uH6tJbY7IN3F8KPBtaQv4hUzQdncnNe8NYLoDPkQxNanzlqT9Opgy2/fAZA+PFO9FBXGGUjyXRie8PRk7XGYoFPW+JDmL0F8j3C2DGKbFOfhraJd63ZQAA2lulxoRS1usrzRWviGJGJgy7rGOK54rWPiuijzFSa+dnq8YwLIRR2Wn2TstLTOpHRb3oDSLZrco8IqKvjbaypSow7dNnA7vT5E9dzqOsa9LjwUhv+dvl528P1YY0qADJ8X0Qt0y5mh2VaPw3btxdHD8zU5zbYiBnjpjpStk//XeavhFBBPJblCt34n4kVnbh1PO+aTjtahv0hMr2GqFOST2w/U1lJerwTR4wX9x/PjNMxwYU5JH5/uF56FkOXDg+lE8O+6QEjD0llA8Grg8RBXlUF9rjiCsw3ExpFkdciSAfz/M8LfJoBxSW6WMN1OJJZIl9yaSyTPGszjtZLB+elWkHd2K73PCc6jRRj/s1nnX9Ezu8Ve5ZsR6hR3NrKC6jisepAyhuS8hZo0qKp2qQc3C1hKK0gyTtRS/KdiFN6udBwbGjTf0sFH0g3i6YPOTf3Zy/E96nYGiFcsvxl2zNlpJc5C6ZulE3epI5twJTU8vclR09144l6yYEN0R6AHn7Tqj/WvogzaxtPOkJaJO8U3ujzdGLrHk/Yxtb5s2omSBak/k1xO+nXGLyJDudTj5fi7gzWTQ3rFAAAAAASUVORK5CYII="
-          }).then(() => {
-            const { uid, email, displayName, photoURL } = auth.currentUser;
-            dispatch(addUser({
-              uid: uid,
-              email: email,
-              displayName: displayName,
-              photoURL: photoURL,
-            })
-            );
-            
-            navigate("/browse")
-          }).catch((error) => {
-            // An error occurred
-            navigate("/error")
-  // ...
-});
-        
-        navigate("/browse")
-    // ...
-    })
-    .catch((error) => {
-    const errorCode = error.code;
-      const errorMessage = error.message;
-      setErrorMessage(errorCode+ "-" +errorMessage)
-    // ..
-  });
+    // sign in/up via firebase
+    if (isSignIn) {
+      // Signing users in
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          // storing user in redux store via action addUser
+          addUserToReduxStore(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + " - sign in err - " + errorMessage);
+        });
     } else {
-      //sign in logic
-     signInWithEmailAndPassword(auth, email.current.value, password.current.value)
-    .then((userCredential) => {
-    // Signed in 
-      const user = userCredential.user;
-      navigate("/browse")
-    // ...
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      setErrorMessage(errorCode+ "-" +errorMessage)
-  });
+      // Registering users up (sign-up)
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          // update user with name and then storing user in redux [taken care in updateUserWithName]
+          updateUserWithName(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + " - sign UP err - " + errorMessage);
+        });
     }
+  };
 
+  const passwordShowHideToggler = () => {
+    if (passwordType === "password") {
+      setPasswordType("text");
+    } else {
+      setPasswordType("password");
     }
+  };
 
+
+  // returned JSX
   return (
-    <div>
-      <Header/>
-      <div className='absolute'>
-      <img src={BG_URL}
-      alt="logo"
+    <div className=" overflow-y-hidden">
+      {/* memoized version of header to prevent not needed renders  */}
+      {memoizedHeader}
+      <img
+        className="max-w-none md:max-w-[100%] h-[87vh] md:h-[unset]"
+        src={BG_URL}
+        alt="background"
       />
-      </div>
-      <form onSubmit={(e)=>e.preventDefault()}
-        className='w-3/12 absolute p-12 bg-black my-36 m-auto left-0 right-0 text-white
-       bg-opacity-80 rounded-lg'>
-      <h1 className='font-bold text-3xl py-4 text-center'>{isSignInForm ? "Sign In" : "SignUp"}</h1>
-
-      {!isSignInForm && (
-        <input 
-        type="text" 
-        placeholder='Enter Your Name' 
-        className='p-4 my-4 w-full bg-gray-700'
-        />
-      )}
-        <input 
+      {/* sing in + sign up form  */}
+      <form className="flex flex-col mx-auto p-4 md:p-8 mb-[-4rem] md:mb-4 rounded bg-[rgba(0,0,0,0.75)] top-[13%] md:top-[20%] left-[50%] translate-x-[-50%] absolute w-[100%] md:w-[450px]">
+        {/* form heading */}
+        <h1 className="p-3 text-white text-2xl md:text-3xl font-semibold md:font-bold">
+          {isSignIn ? "Sign In" : "Sign Up"}
+        </h1>
+        <p className=" text-red-600 text-sm md:text-base  font-light md:font-medium py-1 md:py-3 mx-3">
+          Desclaimer : This is just a dummy project to showcase my skills & for
+          learning purpose. This is not an actual streaming website, do not
+          enter your actual credential here.
+        </p>
+        {/* name input on signUp only  */}
+        {!isSignIn && (
+          <input
+            className="p-3 m-2 border rounded bg-slate-100"
+            type="text"
+            placeholder="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        )}
+        {/* email input  */}
+        <input
+          className="p-3 m-2 border rounded bg-slate-100"
+          type="text"
+          placeholder="email"
           ref={email}
-        type="text" 
-        placeholder='Enter Your Email' 
-        className='p-4 my-4 w-full bg-gray-700'
         />
-        <input 
-          ref={password}
-        type="password" 
-        placeholder='Password' 
-        className='p-4 my-4 w-full bg-gray-700'
-        />
-        <p className='p-2 my-4 text-red-700'>{errorMessage}</p>
+        {/* password input  */}
+        <div className="relative">
+          <input
+            className="p-3 m-2 border rounded bg-slate-100 w-[95%] md:w-[96%]"
+            type={passwordType}
+            placeholder="password"
+            ref={password}
+          />
+          <span
+            onClick={passwordShowHideToggler}
+            className="absolute top-[1.4rem] right-[1.5rem] cursor-pointer"
+          >
+            👁‍🗨
+          </span>
+        </div>
+        {/* error message  */}
+        {errorMessage && (
+          <p className=" text-red-600 font-medium py-3 mx-3">{errorMessage}</p>
+        )}
+        {/* submit button  */}
         <button
-         className='p-4 my-4 bg-red-700 w-full rounded-lg' 
-         onClick={handleOnClick}>{isSignInForm ? "Sign In" : "SignUp"}
-         </button>
-        
-        <p 
-        className='py-6 cursor-pointer' 
-        onClick={toggleSignInForm}>
-        {isSignInForm ? "New to Netflix? Sign Up Now" : "Already registered! Sign In Now"}
+          className="p-3 m-2 bg-red-600 text-white font-bold rounded-md"
+          onClick={submitHandler}
+          ref={signInUpBtn}
+        >
+          {isSignIn ? "Sign In" : "Sign Up"}
+        </button>
+        {/* sign in/up toggler  */}
+        <p
+          className="p-3 m-2 cursor-pointer text-white hover:underline"
+          onClick={signInUpToggler}
+        >
+          {isSignIn
+            ? "Not registered yet! Sign up now"
+            : "Already a customer! Sign in"}
         </p>
       </form>
+      <Footer />
     </div>
-  )
-}
-
+  );
+};
 export default Login;

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import openai from 'openai'
 import { API_OPTIONS } from '../constants/constants'
 import { addSearchedMovies } from '../utils/GPTSlice'
+import { resultMovies } from '../constants/data'
 //import GPTMovieSuggestions from './GPTMovieSuggestions'
 
 
@@ -37,7 +38,9 @@ const GSearchbar = () => {
         //   }
                   //console.log(chatCompletion);
         
-        const resultMovies = ["Don", "sankranthi", "kushi", "indra", "hitler"];
+        //const resultMovies = ["Don", "sankranthi", "kushi", "indra", "hitler"];
+        
+        
 
         const promiseArr = resultMovies.map(movie=>searchTMDB(movie));//it will give  promises will not get immediate result
         
@@ -47,23 +50,23 @@ const GSearchbar = () => {
         
     }
 
-  return (
-      <div className='pt-[10%] flex justify-center'>
-         
-          <form className='bg-black w-1/2 grid grid-cols-12' onSubmit={(e)=>e.preventDefault()}>
-              <input
-                  ref={searchText}
-                  type='text'
-                  className='p-4 m-4 col-span-9'
-                  placeholder={lang[langKey].placeholder}
-              />
-              <button className='m-4 py-2 px-4 col-span-3 bg-red-700 text-white rounded-lg'
-                  onClick={handleGptSearch}>
-                  {lang[langKey].search}
-              </button>
-             
-      </form>
-    </div>
+  return (  
+      <form
+      className="p-2 md:p-4 bg-black rounded-xl absolute top-[25vh] md:top-[30vh] left-[50vw] md:left-[50vw] translate-x-[-50%] translate-y-[-30%]  w-[95%] md:w-2/4 flex justify-between"
+      onSubmit={(e)=>e.preventDefault()}
+    >
+      <input
+        ref={searchText}
+        className="p-2 text-black rounded mr-1 md:mr-5 w-[100%] md:w-3/4"
+        type="search"
+        placeholder={
+            lang[langKey].placeholder
+        }
+      />
+      <button type="submit" className="bg-red-700 text-white p-2 w-1/4 rounded" onClick={handleGptSearch}>
+       {lang[langKey].search}     
+      </button>
+    </form>
   )
 }
 

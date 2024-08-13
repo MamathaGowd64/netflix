@@ -17,9 +17,6 @@ const appRouter =createBrowserRouter([
         element:<Browse />,
     }
 ]);
-
-  
- 
   
   return (
     <div>
